@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 // モデル名：Gemini 3 Flash Preview
-const MODEL_NAME = "gemini-3-flash-preview";
+const MODEL_NAME = "gemini-2.5-flash";
 
 export const getDefinition = async (word: string) => {
   const model = genAI.getGenerativeModel({ model: MODEL_NAME });
