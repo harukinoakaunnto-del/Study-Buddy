@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 // モデル名：Gemini 3 Flash Preview
 const MODEL_NAME = "gemini-3-flash-preview";
 
-exportst getDefinition = async (word: string) => {
+export const getDefinition = async (word: string) => {
   const model = genAI.getGenerativeModel({ model: MODEL_NAME });
   const result = await model.generateContent(`「${word}」の意味を、受験生に分かりやすく簡潔に教えてください。`);
   const response = await result.response;
