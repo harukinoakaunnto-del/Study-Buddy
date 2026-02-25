@@ -15,10 +15,14 @@ export default defineConfig(({mode}) => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    // --- ここから修正 ---
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
+      allowedHosts: true, // 全てのホストを許可
     },
+    preview: {
+      allowedHosts: true, // Previewモードでも全てのホストを許可
+    },
+    // --- ここまで ---
   };
 });
