@@ -2,17 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Book, Languages, MessageCircle, CheckSquare, Calendar, X, 
   Send, Plus, ChevronLeft, Search, Trash2, Timer as TimerIcon, 
-  Play, Pause, RotateCcw, LogOut // LogOutを追加
+  Play, Pause, RotateCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 import { getDefinition, translateWithHints, getAIChatResponse } from './services/gemini';
 
-// --- Supabaseのインポートを追加 ---
-import { supabase } from "./lib/supabase";
-import { Auth } from "./components/Auth";
+// --- Supabase関連のインポートを削除 ---
 
-// --- Types (元のまま) ---
+// --- Types ---
 type View = 'home' | 'dictionary' | 'translator' | 'chat' | 'tasks' | 'countdown' | 'timer';
 
 interface Task {
@@ -21,13 +19,13 @@ interface Task {
   color: string;
 }
 
-// --- Constants (元のまま) ---
+// --- Constants ---
 const PASTEL_COLORS = [
   'bg-[#FFD1DC]', 'bg-[#B2E2F2]', 'bg-[#C1E1C1]', 
   'bg-[#FDFD96]', 'bg-[#E0BBE4]', 'bg-[#FFCC99]',
 ];
 
-// --- Components (ハルキさんの元のコンポーネントをすべてそのまま維持) ---
+// --- Components ---
 
 const Header = ({ title, onBack }: { title: string; onBack: () => void }) => (
   <div className="flex items-center justify-between p-6 bg-white/50 backdrop-blur-md sticky top-0 z-10">
@@ -46,12 +44,8 @@ const HomeIcon = ({ icon, label, color, onClick }: { icon: React.ReactNode; labe
   </motion.button>
 );
 
-const HomeView = ({ onNavigate, onLogout }: { onNavigate: (view: View) => void; onLogout: () => void }) => (
+const HomeView = ({ onNavigate }: { onNavigate: (view: View) => void }) => (
   <div className="h-full flex flex-col items-center justify-center p-8 relative">
-    {/* ログアウトボタンを右上に配置 */}
-    <button onClick={onLogout} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-red-400 flex items-center gap-1 text-sm font-bold">
-      <LogOut size={18} /> ログアウト
-    </button>
     <div className="mb-20 text-center">
       <h1 className="text-4xl font-bold text-gray-700 mb-3">StudyBuddy</h1>
       <p className="text-gray-400 text-lg">今日も一歩、合格へ。</p>
@@ -69,9 +63,7 @@ const HomeView = ({ onNavigate, onLogout }: { onNavigate: (view: View) => void; 
   </div>
 );
 
-// --- DictionaryView, TranslatorView, ChatView, TasksView, CountdownView, TimerView もすべて元のまま ---
-// (※ハルキさんの元の詳細なロジックを100%維持しています)
-
+// (DictionaryView, TranslatorView, ChatView, TasksView, CountdownView, TimerView は元のロジックを維持)
 const DictionaryView = ({ onBack, onSearch, isLoading, result }: any) => {
   const [localWord, setLocalWord] = useState('');
   return (
@@ -240,20 +232,11 @@ const TimerView = ({ onBack }: any) => {
   );
 };
 
-// --- Main App Component (ここをログイン機能と合体させました) ---
-
+// --- Main App Component ---
 export default function App() {
-  const [session, setSession] = useState<any>(null);
   const [currentView, setCurrentView] = useState<View>('home');
 
-  // 1. ログイン状態の管理を追加
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // 2. 各機能のステート (ハルキさんの元のまま)
+  // ステート管理 (LocalStorageを利用してタスクなどを保存)
   const [dictResult, setDictResult] = useState('');
   const [isDictLoading, setIsDictLoading] = useState(false);
   const [transResult, setTransResult] = useState('');
@@ -271,23 +254,20 @@ export default function App() {
   useEffect(() => { localStorage.setItem('tasks', JSON.stringify(tasks)); }, [tasks]);
   useEffect(() => { localStorage.setItem('examDate', examDate); }, [examDate]);
 
-  // 3. ハンドラー (ハルキさんの元のロジック)
+  // ハンドラー
   const handleSearchDict = async (word: string) => { if(!word.trim()) return; setIsDictLoading(true); try { const res = await getDefinition(word); setDictResult(res || ''); } catch(e) { setDictResult('Error'); } finally { setIsDictLoading(false); } };
   const handleTranslate = async (text: string) => { if(!text.trim()) return; setIsTransLoading(true); try { const res = await translateWithHints(text); setTransResult(res || ''); } catch(e) { setTransResult('Error'); } finally { setIsTransLoading(false); } };
-  const handleSendChat = async (text: string) => { if(!text.trim() || isChatLoading) return; const newMsg = [...chatMessages, { role: 'user', content: text }]; setChatMessages(newMsg); setIsChatLoading(true); try { const res = await getAIChatResponse(newMsg); setChatMessages([...newMsg, { role: 'ai', content: res || '' }]); } catch(e) { setChatMessages([...newMsg, { role: 'ai', content: 'Error' }]); } finally { setIsChatLoading(false); } };
+  const handleSendChat = async (text: string) => { if(!text.trim() || isChatLoading) return; const newMsg = [...chatMessages, { role: 'user', content: text }]; setChatMessages(newMsg); setIsChatLoading(true); try { const res = await getAIChatResponse(newMsg); setChatMessages([...newMsg, { role: 'ai', content: res || '' }]); } catch(e) { setChatMessages([...newMsg, { role: 'ai', content: 'エラーが発生しました。' }]); } finally { setIsChatLoading(false); } };
   const addTask = (text: string) => setTasks([...tasks, { id: Date.now().toString(), text, color: PASTEL_COLORS[Math.floor(Math.random() * PASTEL_COLORS.length)] }]);
   const getDaysLeft = () => { if (!examDate) return null; const diff = new Date(examDate).getTime() - new Date().setHours(0,0,0,0); return Math.ceil(diff / (1000 * 60 * 60 * 24)); };
 
-  // --- ログインしていない時はAuth画面を表示 ---
-  if (!session) return <Auth />;
-
-  // --- ログイン済みなら元のメイン画面をフル表示 ---
+  // 常にメイン画面を表示（セッションチェックなし）
   return (
     <div className="h-screen w-full relative overflow-hidden font-sans bg-[#FDFCF0]">
       <AnimatePresence mode="wait">
         {currentView === 'home' && (
           <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-            <HomeView onNavigate={setCurrentView} onLogout={() => supabase.auth.signOut()} />
+            <HomeView onNavigate={setCurrentView} />
           </motion.div>
         )}
         {currentView === 'dictionary' && (
